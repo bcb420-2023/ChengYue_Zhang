@@ -1,4 +1,4 @@
-# Base image https://hub.docker.com/r/rocker/rstudio
+# Base image risserlin/bcb420-base-image:winter2023
 FROM risserlin/bcb420-base-image:winter2023
 
 ##Install R packages
