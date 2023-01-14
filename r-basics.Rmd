@@ -1,0 +1,140 @@
+---
+title: "My First Notebook"
+output: html_notebook
+---
+
+library() - opens a window listing the downloaded packages
+```{r}
+library()
+```
+
+search() - shows which ones are currently loaded.
+```{r}
+search()
+```
+
+Help page for vignette function
+```{r}
+?vignette
+```
+
+
+```{r}
+# to get help on using install.packages
+?install.packages
+
+# Note: the parameter is a quoted string!
+if (! requireNamespace("seqinr", quietly=TRUE)) {
+  install.packages("seqinr")
+}
+```
+
+Launch seqinr package info
+```{r}
+library(help="seqinr") 
+```
+
+
+List all the functions available in the seqinr package.
+```{r}
+#Note: the file must be attached in order for the below function to work 
+library(seqinr)
+ls("package:seqinr")
+```
+
+Help page for function "a" in seqinr
+```{r}
+?seqinr::a 
+```
+
+
+Run the fiction to see the output
+```{r}
+seqinr::a("Tyr")
+```
+
+What does function below do? Include in journal
+```{r}
+seqinr::words(3, c("A", "G", "C", "U"))
+# This function generates the all words from the given alphabet with given length. In this example, our alphabet is AGCU, and the length is 3, so we can generate all combination of codons.
+
+?seqinr::words # Check the help page
+```
+
+Load all data sets available in R
+```{r}
+?data
+```
+
+Load datasets available in seqinr
+```{r}
+data(package="seqinr") 
+  
+```
+
+
+The aaindex dataset in the package
+```{r}
+data(aaindex, package="seqinr") 
+```
+
+Two indices
+```{r}
+aaindex$FASG890101 
+```
+
+```{r}
+aaindex$PONJ960101 
+```
+
+Plot amino acid single-letter codes by hydrophobicity and volume.
+```{r}
+plot(aaindex$FASG890101$I,
+     aaindex$PONJ960101$I,
+     xlab="hydrophobicity", ylab="volume", type="n")
+text(aaindex$FASG890101$I,
+     aaindex$PONJ960101$I,
+     labels=a(names(aaindex$FASG890101$I)))
+```
+
+```{r}
+seqinr::choosebank("swissprot")
+mySeq <- seqinr::query("mySeq", "N=MBP1_YEAST")
+mbp1 <- seqinr::getSequence(mySeq)
+seqinr::closebank()
+x <- seqinr::AAstat(mbp1[[1]])
+barplot(sort(x$Compo), cex.names = 0.6)
+```
+
+
+Load the package
+```{r}
+library(seqinr)
+choosebank("swissprot")
+mySeq <- query("mySeq", "N=MBP1_YEAST")
+mbp1 <- getSequence(mySeq)
+closebank()
+x <- AAstat(mbp1[[1]])
+barplot(sort(x$Compo), cex.names = 0.6)
+```
+
+Get package information with the following:
+```{r}
+library(help = seqinr)
+browseVignettes("seqinr")
+data(package = "seqinr")
+```
+
+
+Look for a package
+```{r}
+if (! requireNamespace("sos", quietly=TRUE)) {
+    install.packages("sos")
+}
+library(help = sos)       # basic information
+browseVignettes("sos")    # available vignettes
+ 
+sos::findFn("moving average")
+```
+
+
