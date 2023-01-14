@@ -1752,82 +1752,75 @@ display: none;
 
 
 <!-- rnb-text-begin -->
-<p>Create a 5 by 10 matrix of random integers</p>
+<!-- rnb-text-end -->
+<!-- rnb-text-begin -->
+<div id="create-a-5-by-10-matrix-of-random-integers" class="section level4">
+<h4>Create a 5 by 10 matrix of random integers</h4>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubVxuXG5gYGAifQ== -->
-<pre class="r"><code>m
-</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubSA8LSBtYXRyaXgoc2FtcGxlLmludCgxMDAsc2l6ZT01MCksbnJvdz01LG5jb2w9MTApXG5gYGAifQ== -->
+<pre class="r"><code>m &lt;- matrix(sample.int(100,size=50),nrow=5,ncol=10)</code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiICAgICBbLDFdIFssMl0gWywzXSBbLDRdIFssNV0gWyw2XSBbLDddIFssOF0gWyw5XSBbLDEwXVxuWzEsXSAgIDUxICAgNDQgICAgOSAgIDc3ICAgNzMgICAxOSAgIDYzICAgMTIgICAgNiAgICA5NVxuWzIsXSAgIDU0ICAgODkgICA4MyAgIDM4ICAgODIgICAgNSAgICA0ICAgNDEgICA4OCAgICAxMFxuWzMsXSAgIDI5ICAgMTUgICA0OSAgIDI2ICAgMjUgICAxNiAgIDk4ICAgNzEgICA0MCAgICAyMVxuWzQsXSAgIDM2ICAgMjIgICA1OCAgMTAwICAgMzAgICA0NyAgICAzICAgNjggICAyNyAgICA1MlxuWzUsXSAgIDM5ICAgODcgICA3OCAgIDg2ICAgMjMgICA2NiAgIDUzICAgMzQgICAyMCAgICAxOFxuIn0= -->
-<pre><code>     [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10]
-[1,]   51   44    9   77   73   19   63   12    6    95
-[2,]   54   89   83   38   82    5    4   41   88    10
-[3,]   29   15   49   26   25   16   98   71   40    21
-[4,]   36   22   58  100   30   47    3   68   27    52
-[5,]   39   87   78   86   23   66   53   34   20    18</code></pre>
-<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
-<p>Define column names as cond1, cond2, cond3, cond4, cond5, ctrl1,
-ctrl2, ctrl3, ctrl4, ctrl5</p>
+</div>
+<div id="define-column-names-as-cond1-cond2-cond3-cond4-cond5-ctrl1-ctrl2-ctrl3-ctrl4-ctrl5" class="section level4">
+<h4>Define column names as cond1, cond2, cond3, cond4, cond5, ctrl1,
+ctrl2, ctrl3, ctrl4, ctrl5</h4>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubVxuXG5gYGAifQ== -->
-<pre class="r"><code>m
-</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuY25hbWVzIDwtIGMoXCJjb25kMVwiLCBcImNvbmQyXCIsIFwiY29uZDNcIiwgXCJjb25kNFwiLCBcImNvbmQ1XCIsXG4gICAgICAgICAgIFwiY3RybDFcIiwgXCJjdHJsMlwiLCBcImN0cmwzXCIsIFwiY3RybDRcIiwgXCJjdHJsNVwiKVxuY29sbmFtZXMobSkgPC0gY25hbWVzXG5gYGAifQ== -->
+<pre class="r"><code>cnames &lt;- c(&quot;cond1&quot;, &quot;cond2&quot;, &quot;cond3&quot;, &quot;cond4&quot;, &quot;cond5&quot;,
+           &quot;ctrl1&quot;, &quot;ctrl2&quot;, &quot;ctrl3&quot;, &quot;ctrl4&quot;, &quot;ctrl5&quot;)
+colnames(m) &lt;- cnames</code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiICAgICBjb25kMSBjb25kMiBjb25kMyBjb25kNCBjb25kNSBjdHJsMSBjdHJsMiBjdHJsMyBjdHJsNCBjdHJsNVxuWzEsXSAgICA1MSAgICA0NCAgICAgOSAgICA3NyAgICA3MyAgICAxOSAgICA2MyAgICAxMiAgICAgNiAgICA5NVxuWzIsXSAgICA1NCAgICA4OSAgICA4MyAgICAzOCAgICA4MiAgICAgNSAgICAgNCAgICA0MSAgICA4OCAgICAxMFxuWzMsXSAgICAyOSAgICAxNSAgICA0OSAgICAyNiAgICAyNSAgICAxNiAgICA5OCAgICA3MSAgICA0MCAgICAyMVxuWzQsXSAgICAzNiAgICAyMiAgICA1OCAgIDEwMCAgICAzMCAgICA0NyAgICAgMyAgICA2OCAgICAyNyAgICA1MlxuWzUsXSAgICAzOSAgICA4NyAgICA3OCAgICA4NiAgICAyMyAgICA2NiAgICA1MyAgICAzNCAgICAyMCAgICAxOFxuIn0= -->
-<pre><code>     cond1 cond2 cond3 cond4 cond5 ctrl1 ctrl2 ctrl3 ctrl4 ctrl5
-[1,]    51    44     9    77    73    19    63    12     6    95
-[2,]    54    89    83    38    82     5     4    41    88    10
-[3,]    29    15    49    26    25    16    98    71    40    21
-[4,]    36    22    58   100    30    47     3    68    27    52
-[5,]    39    87    78    86    23    66    53    34    20    18</code></pre>
-<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
-<p>Define row names as gene1, gene2, gene3 …</p>
+</div>
+<div id="define-row-names-as-gene1-gene2-gene3" class="section level4">
+<h4>Define row names as gene1, gene2, gene3 …</h4>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubVxuXG5gYGAifQ== -->
-<pre class="r"><code>m
-</code></pre>
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucm5hbWVzIDwtIGMoXCJnZW5lMVwiLCBcImdlbmUyXCIsIFwiZ2VuZTNcIiwgXCJnZW5lNFwiLCBcImdlbmU1XCIpXG5yb3duYW1lcyhtKSA8LSBybmFtZXNcbmBgYCJ9 -->
+<pre class="r"><code>rnames &lt;- c(&quot;gene1&quot;, &quot;gene2&quot;, &quot;gene3&quot;, &quot;gene4&quot;, &quot;gene5&quot;)
+rownames(m) &lt;- rnames</code></pre>
 <!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoiICAgICAgY29uZDEgY29uZDIgY29uZDMgY29uZDQgY29uZDUgY3RybDEgY3RybDIgY3RybDMgY3RybDQgY3RybDVcbmdlbmUxICAgIDUxICAgIDQ0ICAgICA5ICAgIDc3ICAgIDczICAgIDE5ICAgIDYzICAgIDEyICAgICA2ICAgIDk1XG5nZW5lMiAgICA1NCAgICA4OSAgICA4MyAgICAzOCAgICA4MiAgICAgNSAgICAgNCAgICA0MSAgICA4OCAgICAxMFxuZ2VuZTMgICAgMjkgICAgMTUgICAgNDkgICAgMjYgICAgMjUgICAgMTYgICAgOTggICAgNzEgICAgNDAgICAgMjFcbmdlbmU0ICAgIDM2ICAgIDIyICAgIDU4ICAgMTAwICAgIDMwICAgIDQ3ICAgICAzICAgIDY4ICAgIDI3ICAgIDUyXG5nZW5lNSAgICAzOSAgICA4NyAgICA3OCAgICA4NiAgICAyMyAgICA2NiAgICA1MyAgICAzNCAgICAyMCAgICAxOFxuIn0= -->
-<pre><code>      cond1 cond2 cond3 cond4 cond5 ctrl1 ctrl2 ctrl3 ctrl4 ctrl5
-gene1    51    44     9    77    73    19    63    12     6    95
-gene2    54    89    83    38    82     5     4    41    88    10
-gene3    29    15    49    26    25    16    98    71    40    21
-gene4    36    22    58   100    30    47     3    68    27    52
-gene5    39    87    78    86    23    66    53    34    20    18</code></pre>
-<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
-<p>Compute the fold change for each gene</p>
+</div>
+<div id="compute-the-fold-change-for-each-gene." class="section level4">
+<h4>Compute the fold change for each gene.</h4>
+<p><strong><em>A question regarding calculating the fold change for each
+gene:</em></strong></p>
+<p>In our matrix, we have two groups, “cond” and “ctrl”, and each group
+has 5 samples. If we are to calculate fold change, should we calculate
+it as “cond1” vs “ctrl1”, “cond2” vs “ctrl2” etc, or should we use the
+method in DESeq2 package, where they use some term called
+“pseudo-reference counts” to normalize the samples in each group, then
+calculate the lo2FC overall?</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucmVzXG5cbmBgYCJ9 -->
-<pre class="r"><code>res
-</code></pre>
-<!-- rnb-source-end -->
-<!-- rnb-output-begin eyJkYXRhIjoibG9nMiBmb2xkIGNoYW5nZSAoTUxFKTogY29uZGl0aW9ucyBjb25kIHZzIGN0cmwgXG5XYWxkIHRlc3QgcC12YWx1ZTogY29uZGl0aW9ucyBjb25kIHZzIGN0cmwgXG5EYXRhRnJhbWUgd2l0aCA1IHJvd3MgYW5kIDYgY29sdW1uc1xuICAgICAgIGJhc2VNZWFuIGxvZzJGb2xkQ2hhbmdlICAgICBsZmNTRSAgICAgIHN0YXQgICAgIHB2YWx1ZSAgICAgIHBhZGpcbiAgICAgIDxudW1lcmljPiAgICAgIDxudW1lcmljPiA8bnVtZXJpYz4gPG51bWVyaWM+ICA8bnVtZXJpYz4gPG51bWVyaWM+XG5nZW5lMSAgIDQ1LjA4OTIgICAgIC0wLjI2NDY1NjMgIDAuODgyNTgxIC0wLjI5OTg2NiAwLjc2NDI3OTEyIDAuODM0MjM2NlxuZ2VuZTIgICA0NC4wOTk3ICAgICAgMC42OTg5ODk3ICAwLjgzNzI1MyAgMC44MzQ4NjAgMC40MDM3OTYzNCAwLjcwNDgyODNcbmdlbmUzICAgMzQuOTk4OSAgICAgLTEuMjEyMDk2OCAgMC4zOTc1NDUgLTMuMDQ4OTU2IDAuMDAyMjk2MzggMC4wMTE0ODE5XG5nZW5lNCAgIDQxLjI3NjkgICAgIC0wLjU1MDQzNzYgIDAuNjg2ODQwIC0wLjgwMTQwNSAwLjQyMjg5Njk4IDAuNzA0ODI4M1xuZ2VuZTUgICA0NC4zNTc1ICAgICAtMC4wOTY5NDI5ICAwLjQ2MzI0MSAtMC4yMDkyNzEgMC44MzQyMzY2NCAwLjgzNDIzNjZcbiJ9 -->
-<pre><code>log2 fold change (MLE): conditions cond vs ctrl 
-Wald test p-value: conditions cond vs ctrl 
-DataFrame with 5 rows and 6 columns
-       baseMean log2FoldChange     lfcSE      stat     pvalue      padj
-      &lt;numeric&gt;      &lt;numeric&gt; &lt;numeric&gt; &lt;numeric&gt;  &lt;numeric&gt; &lt;numeric&gt;
-gene1   45.0892     -0.2646563  0.882581 -0.299866 0.76427912 0.8342366
-gene2   44.0997      0.6989897  0.837253  0.834860 0.40379634 0.7048283
-gene3   34.9989     -1.2120968  0.397545 -3.048956 0.00229638 0.0114819
-gene4   41.2769     -0.5504376  0.686840 -0.801405 0.42289698 0.7048283
-gene5   44.3575     -0.0969429  0.463241 -0.209271 0.83423664 0.8342366</code></pre>
-<!-- rnb-output-end -->
-<!-- rnb-chunk-end -->
-<!-- rnb-text-begin -->
-<!-- rnb-text-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuY29sZGF0YSA8LSBkYXRhLmZyYW1lKGdlbmVzID0gcm5hbWVzLFxuICAgICAgICAgICAgICAgICAgICAgIGNvbmRpdGlvbnMgPSBjbmFtZXMpXG5jb2xkYXRhJGNvbmRpdGlvbnMgPC0gZmFjdG9yKHN1YnN0cihjbmFtZXMsIHN0YXJ0ID0gMSwgXG4gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBzdG9wID0gbmNoYXIoY25hbWVzWzFdKSAtIDEpKVxuZGRzIDwtIERFU2VxMjo6REVTZXFEYXRhU2V0RnJvbU1hdHJpeChjb3VudERhdGEgPSBtLFxuICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBjb2xEYXRhID0gY29sZGF0YSxcbiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgZGVzaWduID0gfiBjb25kaXRpb25zKVxuZGRzJGNvbmRpdGlvbnMgPC0gZmFjdG9yKGRkcyRjb25kaXRpb25zLCBsZXZlbHMgPSBjKFwiY29uZFwiLFwiY3RybFwiKSlcbmRkcyA8LSBERVNlcTI6OkRFU2VxKGRkcylcblxuIyBDYWxjdWxhdGUgbG9nMkZvbGRDaGFuZ2Ugb2YgY29udHJvbCB2cyBjb25kaXRpb25cbnJlcyA8LSBERVNlcTI6OnJlc3VsdHMoZGRzLCBjb250cmFzdD1jKFwiY29uZGl0aW9uc1wiLFwiY29uZFwiLFwiY3RybFwiKSlcbnJlc1xuYGBgIn0= -->
+<pre class="r"><code>coldata &lt;- data.frame(genes = rnames,
+                      conditions = cnames)
+coldata$conditions &lt;- factor(substr(cnames, start = 1, 
+                                    stop = nchar(cnames[1]) - 1))
+dds &lt;- DESeq2::DESeqDataSetFromMatrix(countData = m,
+                                      colData = coldata,
+                                      design = ~ conditions)
+dds$conditions &lt;- factor(dds$conditions, levels = c(&quot;cond&quot;,&quot;ctrl&quot;))
+dds &lt;- DESeq2::DESeq(dds)
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiSG9tZXdvcmsgMSIKb3V0cHV0OiBodG1sX25vdGVib29rCi0tLQoKQ3JlYXRlIGEgNSBieSAxMCBtYXRyaXggb2YgcmFuZG9tIGludGVnZXJzCmBgYHtyfQptIDwtIG1hdHJpeChzYW1wbGUuaW50KDEwMCxzaXplPTUwKSxucm93PTUsbmNvbD0xMCkKYGBgCgpEZWZpbmUgY29sdW1uIG5hbWVzIGFzIGNvbmQxLCBjb25kMiwgY29uZDMsIGNvbmQ0LCBjb25kNSwgY3RybDEsIGN0cmwyLCBjdHJsMywgY3RybDQsIGN0cmw1CmBgYHtyfQpjbmFtZXMgPC0gYygiY29uZDEiLCAiY29uZDIiLCAiY29uZDMiLCAiY29uZDQiLCAiY29uZDUiLAogICAgICAgICAgICJjdHJsMSIsICJjdHJsMiIsICJjdHJsMyIsICJjdHJsNCIsICJjdHJsNSIpCmNvbG5hbWVzKG0pIDwtIGNuYW1lcwpgYGAKCkRlZmluZSByb3cgbmFtZXMgYXMgZ2VuZTEsIGdlbmUyLCBnZW5lMyAuLi4KYGBge3J9CnJuYW1lcyA8LSBjKCJnZW5lMSIsICJnZW5lMiIsICJnZW5lMyIsICJnZW5lNCIsICJnZW5lNSIpCnJvd25hbWVzKG0pIDwtIHJuYW1lcwpgYGAKCkNvbXB1dGUgdGhlIGZvbGQgY2hhbmdlIGZvciBlYWNoIGdlbmUKYGBge3J9CiMgRm9sbG93aW5nIHRoZSBwaXBlbGluZSBvZiBERVNlcTIKY29sZGF0YSA8LSBkYXRhLmZyYW1lKGdlbmVzID0gcm5hbWVzLAogICAgICAgICAgICAgICAgICAgICAgY29uZGl0aW9ucyA9IGNuYW1lcykKY29sZGF0YSRjb25kaXRpb25zIDwtIGZhY3RvcihzdWJzdHIoY25hbWVzLCBzdGFydCA9IDEsIAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBzdG9wID0gbmNoYXIoY25hbWVzWzFdKSAtIDEpKQpkZHMgPC0gREVTZXEyOjpERVNlcURhdGFTZXRGcm9tTWF0cml4KGNvdW50RGF0YSA9IG0sCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgY29sRGF0YSA9IGNvbGRhdGEsCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgZGVzaWduID0gfiBjb25kaXRpb25zKQpkZHMkY29uZGl0aW9ucyA8LSBmYWN0b3IoZGRzJGNvbmRpdGlvbnMsIGxldmVscyA9IGMoImNvbmQiLCJjdHJsIikpCmRkcyA8LSBERVNlcShkZHMpCnJlc3VsdHNOYW1lcyhkZHMpCgojIENhbGN1bGF0ZSBsb2cyRm9sZENoYW5nZSBvZiBjb250cm9sIHZzIGNvbmRpdGlvbgpyZXMgPC0gcmVzdWx0cyhkZHMsIGNvbnRyYXN0PWMoImNvbmRpdGlvbnMiLCJjb25kIiwiY3RybCIpKQpyZXMKYGBgCgoKCgoK</div>
+# Calculate log2FoldChange of control vs condition
+res &lt;- DESeq2::results(dds, contrast=c(&quot;conditions&quot;,&quot;cond&quot;,&quot;ctrl&quot;))
+res</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+<!-- rnb-text-end -->
+</div>
+
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiSG9tZXdvcmsgMSIKb3V0cHV0OgogIGh0bWxfZG9jdW1lbnQ6CiAgICBkZl9wcmludDogcGFnZWQKICBodG1sX25vdGVib29rOiBkZWZhdWx0CiAgcGRmX2RvY3VtZW50OiBkZWZhdWx0Ci0tLQoKYGBge3IsIGluY2x1ZGUgPSBGQUxTRX0Ka25pdHI6Om9wdHNfY2h1bmskc2V0KAogIGNvbGxhcHNlID0gVFJVRSwKICBjb21tZW50ID0gIiM+IiwKICBmaWcucGF0aCA9ICJtYW4vZmlndXJlcy9SRUFETUUtIiwKICBvdXQud2lkdGggPSAiMTAwJSIKKQpgYGAKCiMjIyMgQ3JlYXRlIGEgNSBieSAxMCBtYXRyaXggb2YgcmFuZG9tIGludGVnZXJzCmBgYHtyfQptIDwtIG1hdHJpeChzYW1wbGUuaW50KDEwMCxzaXplPTUwKSxucm93PTUsbmNvbD0xMCkKYGBgCgojIyMjIERlZmluZSBjb2x1bW4gbmFtZXMgYXMgY29uZDEsIGNvbmQyLCBjb25kMywgY29uZDQsIGNvbmQ1LCBjdHJsMSwgY3RybDIsIGN0cmwzLCBjdHJsNCwgY3RybDUKYGBge3J9CmNuYW1lcyA8LSBjKCJjb25kMSIsICJjb25kMiIsICJjb25kMyIsICJjb25kNCIsICJjb25kNSIsCiAgICAgICAgICAgImN0cmwxIiwgImN0cmwyIiwgImN0cmwzIiwgImN0cmw0IiwgImN0cmw1IikKY29sbmFtZXMobSkgPC0gY25hbWVzCmBgYAoKIyMjIyBEZWZpbmUgcm93IG5hbWVzIGFzIGdlbmUxLCBnZW5lMiwgZ2VuZTMgLi4uCmBgYHtyfQpybmFtZXMgPC0gYygiZ2VuZTEiLCAiZ2VuZTIiLCAiZ2VuZTMiLCAiZ2VuZTQiLCAiZ2VuZTUiKQpyb3duYW1lcyhtKSA8LSBybmFtZXMKYGBgCgojIyMjIENvbXB1dGUgdGhlIGZvbGQgY2hhbmdlIGZvciBlYWNoIGdlbmUuCgpfXypBIHF1ZXN0aW9uIHJlZ2FyZGluZyBjYWxjdWxhdGluZyB0aGUgZm9sZCBjaGFuZ2UgZm9yIGVhY2ggZ2VuZToqX18gCgpJbiBvdXIgbWF0cml4LCB3ZSBoYXZlIHR3byBncm91cHMsICJjb25kIiBhbmQgImN0cmwiLCBhbmQgZWFjaCBncm91cCBoYXMgNSBzYW1wbGVzLiBJZiB3ZSBhcmUgdG8gY2FsY3VsYXRlIGZvbGQgY2hhbmdlLCBzaG91bGQgd2UgY2FsY3VsYXRlIGl0IGFzICJjb25kMSIgdnMgImN0cmwxIiwgImNvbmQyIiB2cyAiY3RybDIiIGV0Yywgb3Igc2hvdWxkIHdlIHVzZSB0aGUgbWV0aG9kIGluIERFU2VxMiBwYWNrYWdlLCB3aGVyZSB0aGV5IHVzZSBzb21lIHRlcm0gY2FsbGVkICJwc2V1ZG8tcmVmZXJlbmNlIGNvdW50cyIgdG8gbm9ybWFsaXplIHRoZSBzYW1wbGVzIGluIGVhY2ggZ3JvdXAsIHRoZW4gY2FsY3VsYXRlIHRoZSBsbzJGQyBvdmVyYWxsPwoKYGBge3J9CmNvbGRhdGEgPC0gZGF0YS5mcmFtZShnZW5lcyA9IHJuYW1lcywKICAgICAgICAgICAgICAgICAgICAgIGNvbmRpdGlvbnMgPSBjbmFtZXMpCmNvbGRhdGEkY29uZGl0aW9ucyA8LSBmYWN0b3Ioc3Vic3RyKGNuYW1lcywgc3RhcnQgPSAxLCAKICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgc3RvcCA9IG5jaGFyKGNuYW1lc1sxXSkgLSAxKSkKZGRzIDwtIERFU2VxMjo6REVTZXFEYXRhU2V0RnJvbU1hdHJpeChjb3VudERhdGEgPSBtLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGNvbERhdGEgPSBjb2xkYXRhLAogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGRlc2lnbiA9IH4gY29uZGl0aW9ucykKZGRzJGNvbmRpdGlvbnMgPC0gZmFjdG9yKGRkcyRjb25kaXRpb25zLCBsZXZlbHMgPSBjKCJjb25kIiwiY3RybCIpKQpkZHMgPC0gREVTZXEyOjpERVNlcShkZHMpCgojIENhbGN1bGF0ZSBsb2cyRm9sZENoYW5nZSBvZiBjb250cm9sIHZzIGNvbmRpdGlvbgpyZXMgPC0gREVTZXEyOjpyZXN1bHRzKGRkcywgY29udHJhc3Q9YygiY29uZGl0aW9ucyIsImNvbmQiLCJjdHJsIikpCnJlcwpgYGAKCgoKCgo=</div>
 
 
 
