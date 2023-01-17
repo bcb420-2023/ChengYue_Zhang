@@ -138,3 +138,61 @@ sos::findFn("moving average")
 ```
 
 
+```{r}
+5
+5 + 3
+5 + 1 / 2 # Think first: is this 3 or 5.5
+3 * 2 + 1
+3 * (2 + 1)
+2^3 # Exponentiation
+8 ^ (1/3) # Third root via exponentiation
+7 %% 2  # Modulo operation (remainder of integer division)
+7 %/% 2 # Integer division
+
+# Logical operators return TRUE or FALSE
+#    Unary:
+TRUE
+FALSE
+! TRUE  # read carefully: the "!" (meaning "not") is easily overlooked
+! FALSE
+ 
+#    Binary operators
+ 
+1 == 2
+1 != 2
+1 < 2
+1 > 2
+ 
+1 > 1
+1 >= 1
+1 < 1
+1 <= 1
+ 
+#    & (means AND)
+TRUE & TRUE
+TRUE & FALSE
+FALSE & FALSE
+ 
+#    | (means OR)
+TRUE | TRUE
+TRUE | FALSE
+FALSE | FALSE
+ 
+# Predict what this will return
+!(FALSE | (! FALSE))
+```
+
+Don't use the same variable name as the parameter name.
+Bad example below:
+```{r}
+# I don't like...
+col <- c("red", "grey")
+hist(rnorm(200), col=col) # Don't use col=col!!
+```
+
+Good example below:
+```{r}
+# I prefer instead something like...
+stripes <- c("red", "grey")
+hist(rnorm(200), col=stripes)
+```
