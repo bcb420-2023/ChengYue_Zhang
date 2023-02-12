@@ -315,6 +315,7 @@ normalized_counts <- cpm(d)
 ```
 
 Inspect the sample separation using a multidimensional scaling plot or MDS plot post normalization.
+
 * Blue: Normal
 * Dark green: Mets
 * Black: Tumor
@@ -435,12 +436,12 @@ not_hgnc <- myexp_filtered[-(which(rownames(normalized_counts) %in% gene_convers
 ```{r}
 kable(searchAttributes(mart = ensembl, 'entrez') , format="html")
 
-table1 <- getBM(attributes = c("entrezgene_accession","hgnc_symbol"),
+entrez_conversion <- getBM(attributes = c("entrezgene_accession","hgnc_symbol"),
                     filters = "entrezgene_accession",
                     values = not_hgnc$Gene,
                     mart = ensembl)
 
-rownames(normalized_counts)[which(rownames(normalized_counts) %in% table1$entrezgene_accession)] <- table1$hgnc_symbol
+rownames(normalized_counts)[which(rownames(normalized_counts) %in% entrez_conversion$entrezgene_accession)] <- entrez_conversion$hgnc_symbol
 ```
 
 
@@ -450,7 +451,7 @@ rownames(normalized_counts)[which(rownames(normalized_counts) %in% table1$entrez
 According to [HGNC website of BioMart](https://www.genenames.org/help/biomart/) help page, the attribute used to map GenBank IDs to HGNC symbols is named as **INSDC**. 
 
 ```{r}
-genbank <- not_hgnc[-(which(not_hgnc$Gene %in% table1$entrezgene_accession)), ]
+genbank <- not_hgnc[-(which(not_hgnc$Gene %in% entrez_conversion$entrezgene_accession)), ]
 knitr::kable(biomart_human_filters[
   grep(biomart_human_filters$description,pattern="INSDC"),],
       format="html")
@@ -471,7 +472,7 @@ dim(getBM(attributes = c("protein_id","hgnc_symbol"),
 
 
 ```{r}
-mapped_index <- which((rownames(normalized_counts) %in% table1$hgnc_symbol) |
+mapped_index <- which((rownames(normalized_counts) %in% entrez_conversion$hgnc_symbol) |
                     (rownames(normalized_counts) %in% gene_conversion$hgnc_symbol))
 
 
