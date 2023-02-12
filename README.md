@@ -1,2 +1,5 @@
 # ChengYue_Zhang
-Link to A1: file:///Users/antioxidant233/St.George/2023Winter/BCB420/ChengYue_Zhang/A1/Assignment1.html
+
+## A1
+* Link to html notebook: https://github.com/bcb420-2023/ChengYue_Zhang/blob/main/A1/Assignment1.html
+* Direct preview: https://htmlpreview.github.io/?https://github.com/bcb420-2023/ChengYue_Zhang/blob/main/A1/Assignment1.html
