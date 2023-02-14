@@ -21,7 +21,7 @@ bibliography: A1.bib
 * [biomaRt](https://bioconductor.org/packages/release/bioc/html/biomaRt.html) (@durinck2009a, @durinck2005a)
 * [GEOquery](https://bioconductor.org/packages/release/bioc/html/GEOquery.html) (@davis2007a)
 * [Biobase & BioGenerics](https://bioconductor.org/packages/release/bioc/html/Biobase.html) (@huber2015a)
-```{r message = FALSE, warning=FALSE}
+```{r Install package, message=FALSE, warning=FALSE}
 if (!requireNamespace("BiocManager", quietly = TRUE)){
   install.packages("BiocManager")}
 
@@ -52,8 +52,6 @@ if (!requireNamespace("GEOquery", quietly = TRUE)){
 if (!requireNamespace("Biobase", quietly = TRUE)){
   BiocManager::install("Biobase")}
 
-if (!requireNamespace("BioGenerics", quietly = TRUE)){
-  BiocManager::install("BioGenerics")}
 
 if (!requireNamespace("odbc", quietly = TRUE)){
   install.packages("odbc")}
@@ -70,7 +68,7 @@ if (!requireNamespace("kableExtra", quietly = TRUE)){
 ```
 
 Load packages
-```{r message = FALSE}
+```{r Load library, message=FALSE}
 library("GEOmetadb")
 library("ggplot2")
 library("knitr")
@@ -80,7 +78,6 @@ library("limma")
 library("biomaRt")
 library("GEOquery")
 library("Biobase")
-library("BiocGenerics")
 library("odbc")
 library("dplyr")
 library("DBI")
@@ -92,13 +89,13 @@ library("kableExtra")
 ## 1. Download the data
 
 Get the GEO description of my dataset GSE162515
-```{r message=FALSE}
+```{r Get dataset, message=FALSE}
 gse <- getGEO("GSE162515",GSEMatrix=FALSE)
 kable(data.frame(head(Meta(gse))), format = "html")
 ```
 <br>
 Information about platform
-```{r message=FALSE}
+```{r Information about platform, message=FALSE}
 current_gpl <- names(GPLList(gse))[1]
 current_gpl_info <- Meta(getGEO(current_gpl))
 
@@ -112,13 +109,13 @@ current_gpl_info$organism
 <br>
 
 Get the expression data
-```{r message=FALSE}
+```{r Get expression data, message=FALSE}
 sfiles <- getGEOSuppFiles('GSE162515')
 ```
 <br>
 
 There are four supplement files. Here, I will choose [4] which is the RNAseq raw counts file.
-```{r echo = TRUE, message = TRUE}
+```{r List supplement files, echo = TRUE, message = TRUE}
 fnames <- rownames(sfiles)
 ntm_exp <- read.delim(fnames[4],header=TRUE,
                 check.names = FALSE)
@@ -127,14 +124,14 @@ fnames
 <br>
 
 Information about expression data (i.e. gene names, chromosome, start/end position, sequence length) are from column 88 to 92 in the table. Move these to the first column for better visualization and processing.
-```{r}
+```{r Info about expression data}
 expInfos <- ntm_exp[, seq(88, 92)]
 
 ntm_exp <- cbind(expInfos, ntm_exp[, seq(-88, -92)])
 ```
 <br>
 Check the table
-```{r}
+```{r Check expression data}
 kable(ntm_exp[1:15,1:15], format = "html")
 ```
 
@@ -143,19 +140,19 @@ kable(ntm_exp[1:15,1:15], format = "html")
 ## 2. Assess data quality
 
 How many genes do I have measurements for?
-```{r dimension of loaded data}
+```{r Dimension of loaded data}
 dim(ntm_exp)
 ```
 <br>
 Are any of genes duplicated? and Why?
 
-```{r}
+```{r Look for duplicated genes step 1}
 summarized_gene_counts <- sort(table(ntm_exp$Gene),
                                decreasing = TRUE)
 ```
 <br>
 Only output those with frequency greater than 1
-```{r}
+```{r Obtain high freq rows}
 kable(summarized_gene_counts[which(summarized_gene_counts>1)[1:10]], format = 'html')
 ```
 <br>
@@ -163,13 +160,13 @@ kable(summarized_gene_counts[which(summarized_gene_counts>1)[1:10]], format = 'h
 So yes, there are duplicated genes, but not very significant. The highest frequency of duplicate is only 2. These might be the PCR duplicates that result from sequencing two or more copies of the exact same cDNA fragment. I do not neet to filter them out.
 
 Right now, the column names for the count data are very informative, as shown below:
-```{r}
+```{r List column names}
 colnames(ntm_exp)[1:15]
 ```
 ### Use the GSE series matrix to make the column names informative
 
 Obtain the series matrix file through GEOquery.
-```{r message=FALSE}
+```{r Obtain series matrix, message=FALSE}
 gseFile <- getGEO('GSE162515',GSEMatrix=TRUE)
 gseInfo <- pData(phenoData(gseFile[[1]]))
 
@@ -177,14 +174,14 @@ gseInfo <- pData(phenoData(gseFile[[1]]))
 <br>
 
 Filter out the samples that are not RNA-seq.
-```{r}
+```{r Filter out non-RNA-seq data}
 rnaSeq <- gseInfo[grepl("RNA", gseInfo$title), c(1, 6, 8)]
 rnaSeq[1:10,]
 ```
 <br>
 
 Process sample names
-```{r results='hide'}
+```{r Process sample names, results='hide'}
 samples <- lapply(rnaSeq$title, FUN=function(x){unlist(strsplit(x,
                         split = " "))[2]})
 sample_types <- substr(samples,1,nchar(samples)-1)
@@ -195,7 +192,7 @@ colnames(ntm_exp) <- newColNames
 **Group the data**
 
 There are three groups of samples, where "T" indicates "Thyroid tumor", "N" indicates "Normal thyroid, and "M" indicates "Cervical LymphNode Metastases". 
-```{r}
+```{r Group data}
 #get the 2 and third token from the column names
 samples <- data.frame(lapply(colnames(ntm_exp)[6:92], FUN=function(x){unlist(strsplit(x,
                         split = "\\-"))[c(2,3)]}))
@@ -205,7 +202,7 @@ samples <- data.frame(t(samples))
 ```
 <br>
 From the paper (@sanghi2021a), the authors indicates that there are 27 "N" type samples, 30 "T" type samples and 30 "M" type samples. Check whether I have obtained all of them.
-```{r}
+```{r Samples in each group}
 sum(grepl("N", samples$tissue_type))
 # [1] 27
 sum(grepl("T", samples$tissue_type))
@@ -217,7 +214,7 @@ sum(grepl("M", samples$tissue_type))
 
 # Filter out low counts
 
-```{r}
+```{r Filter out low counts}
 #translate out counts into counts per million using 
 #the edgeR package function cpm
 cpms <- edgeR::cpm(ntm_exp[,6:92])
@@ -232,7 +229,7 @@ ntm_exp_filtered <- ntm_exp[keep,]
 **What does that do to the dataset?**
 
 The size of our dataset gets smaller.
-```{r difference before and after filtering on the expression data}
+```{r Difference before and after filtering on the expression data}
 dim(ntm_exp)
 dim(ntm_exp_filtered)
 ```
@@ -240,7 +237,7 @@ dim(ntm_exp_filtered)
 **What does that do to the duplicates?**
 
 The duplicates do not change. The highest frequency of duplicate is still 2.
-```{r}
+```{r Obtain high freq}
 summarized_gene_counts_filtered <- sort(table(ntm_exp$Gene),
                                decreasing = TRUE)
 
@@ -254,11 +251,27 @@ kable(summarized_gene_counts_filtered[
 # Normalization
 ## Distribution of our data
 ### Boxplot
-```{r warning=FALSE,message=FALSE}
+
+The following is the box plot of the original count data, before filtering out any low counts. We can see that there is some fluctuation in the medians, and the overall median is close to 0, indicating the existence of low-expressed or non-expressed genes.
+```{r Boxplot non-filtered, warning=FALSE,message=FALSE}
+data1plot <- log2(cpm(ntm_exp[,6:92]))
+boxplot(data1plot, xlab = "Samples", ylab = "log2 CPM",
+        las = 2, cex = 0.5, cex.lab = 0.5,
+        cex.axis = 0.5, main = "Non-filtered RNASeq Samples")
+#draw the median on each box plot
+abline(h = median(apply(data1plot, 2, median)),
+       col = "green", lwd = 0.6, lty = "dashed")
+```
+
+
+
+
+After filtering out the low count genes, the new boxplot is shown below. The central tendency of the count data is close to log2CPM of 5, indicating a success remove of low count genes, and the genes in the samples have relatively high expression level. Interestingly, the data is already well-aligned, so we would expect the normalization step improves minimally on the quality of the dataset.
+```{r Boxplot filtered, warning=FALSE,message=FALSE}
 data2plot <- log2(cpm(ntm_exp_filtered[,6:92]))
 boxplot(data2plot, xlab = "Samples", ylab = "log2 CPM",
         las = 2, cex = 0.5, cex.lab = 0.5,
-        cex.axis = 0.5, main = "RNASeq Samples")
+        cex.axis = 0.5, main = "Filtered RNASeq Samples")
 #draw the median on each box plot
 abline(h = median(apply(data2plot, 2, median)),
        col = "green", lwd = 0.6, lty = "dashed")
@@ -266,8 +279,9 @@ abline(h = median(apply(data2plot, 2, median)),
 
 ### Density plot
 
-Density plot of the filtered expression dataset before normalization.The plot is showing a normal distribution, so we will use TMM for normalization.
-```{r}
+Density plot of the filtered expression dataset before normalization. We can see that the counts are already on a comparable scale, and as stated previously, the normalization may not have a significant impact on the data.
+
+```{r Density plot}
 counts_density <- apply(log2(edgeR::cpm(ntm_exp_filtered[,6:92])), 
                         2, density)
   #calculate the limits across all the samples
@@ -281,7 +295,7 @@ counts_density <- apply(log2(edgeR::cpm(ntm_exp_filtered[,6:92])),
     #plot the first density plot to initialize the plot
     plot(counts_density[[1]], xlim=xlim, ylim=ylim, type="n", 
          ylab="Smoothing density of log2-CPM", 
-         main="", cex.lab = 0.7)
+         main="Density plot before normalization", cex.lab = 0.7)
     #plot each line
     for (i in 1:length(counts_density)) 
       lines(counts_density[[i]], col=cols[i], lty=ltys[i])
@@ -294,9 +308,11 @@ counts_density <- apply(log2(edgeR::cpm(ntm_exp_filtered[,6:92])),
 ```
 
 ## MA plot comparing the C1-T1 and C1-N1 sample in data set
-```{r}
+
+We can see that most the genes are clustered, but there are some extremes that are spread out. We aim to get rid of these extreme values from our data.
+```{r MA plot}
 limma::plotMA(log2(ntm_exp[,c(6,7)]), ylab="M - ratio log expression", 
-       main="C1-T1 vs N1 example")
+       main="C1-T1 vs C1-N1 MA plot")
 ```
 
 ## Applying TMM
@@ -309,12 +325,12 @@ d <- edgeR::DGEList(counts = filtered_data_matrix, group = samples$tissue_type)
 ```
 
 Calculate normalization factor
-```{r results='hide'}
+```{r Normalized factor, results='hide'}
 d <- calcNormFactors(d)
 ```
 
 Get the normalized data
-```{r results='hide'}
+```{r Get normalized data, results='hide'}
 #get the normalized data
 normalized_counts <- cpm(d)
 ```
@@ -323,14 +339,14 @@ normalized_counts <- cpm(d)
 
 ### Boxplot after normalization
 
-The difference of the boxplot before and after normalization is too minimal to be visualized.
-```{r warning=FALSE,message=FALSE}
-data2plot <- log2(cpm(normalized_counts[,1:87]))
-boxplot(data2plot, xlab = "Samples", ylab = "log2 CPM",
+The difference between the boxplot before and after normalization is too minimal to be seen, as expected.
+```{r Boxplot after normalization, warning=FALSE,message=FALSE}
+data3plot <- log2(cpm(normalized_counts[,1:87]))
+boxplot(data3plot, xlab = "Samples", ylab = "log2 CPM",
         las = 2, cex = 0.5, cex.lab = 0.5,
-        cex.axis = 0.5, main = "RNASeq Samples")
+        cex.axis = 0.5, main = "Normalized RNASeq Samples")
 #draw the median on each box plot
-abline(h = median(apply(data2plot, 2, median)),
+abline(h = median(apply(data3plot, 2, median)),
        col = "green", lwd = 0.6, lty = "dashed")
 ```
 
@@ -339,8 +355,8 @@ abline(h = median(apply(data2plot, 2, median)),
 
 ### Density plot after normalization.
 
-There is no difference in the density plot before and after normalization, or the difference is too minimal to be visualized.
-```{r}
+There is no difference in the density plot before and after normalization, or the difference is too minimal to be taken into consideration.
+```{r Density plot after normalization}
 normalized_counts_density <- apply(log2(edgeR::cpm(normalized_counts[,1:87])), 
                         2, density)
   #calculate the limits across all the samples
@@ -354,13 +370,13 @@ normalized_counts_density <- apply(log2(edgeR::cpm(normalized_counts[,1:87])),
     #plot the density plot
     plot(normalized_counts_density[[1]], xlim=xlim, ylim=ylim, type="n", 
          ylab="Smoothing density of log2-CPM", 
-         main="", cex.lab = 0.7)
+         main="Density plot after normalization", cex.lab = 0.7)
     #plot each line
     for (i in 1:length(normalized_counts_density)) 
       lines(normalized_counts_density[[i]], col=cols[i], lty=ltys[i])
     
     #create legend
-    legend("topright", colnames(data2plot),  
+    legend("topright", colnames(data3plot),  
            col=cols, lty=ltys, cex=0.45, 
            border ="blue",  text.col = "green4", 
            merge = TRUE, bg = "gray90", ncol = 3)
@@ -369,16 +385,27 @@ normalized_counts_density <- apply(log2(edgeR::cpm(normalized_counts[,1:87])),
 
 
 
+## MA plot comparing the C1-T1 and C1-N1 sample after normalization
+
+There is no visible difference in the MA plot before and after normalization. This indicates that the dataset was already at a high quality, also as shown in the box plot and the density plot above.
+```{r Normalized MA plot}
+limma::plotMA(log2(normalized_counts[,c(1,2)]), ylab="M - ratio log expression", 
+       main="Normalized C1-T1 vs C1-N1 MA plot")
+```
+
+
 
 Inspect the sample separation using a multidimensional scaling plot or MDS plot post normalization.
 
 * Blue: Normal
 * Dark green: Mets
 * Black: Tumor
-```{r visualized post normalized data}
-plotMDS(d, labels = rownames(samples),
-  col = c("darkgreen", "blue")[factor(samples$tissue_type)])
 
+From the plot, we can see that the overall separation between each test condition group (T and M) to normal group is good, indicating a good dataset quality.
+
+```{r Visualized post normalized data}
+plotMDS(d, cex = 0.5, labels = rownames(samples),
+  col = c("darkgreen", "blue")[factor(samples$tissue_type)])
 ```
 
 
@@ -389,43 +416,37 @@ model_design <- model.matrix(~samples$individual
 d <- edgeR::estimateDisp(d, model_design)
 ```
 
-Graphing the dispersion-squared BCV
-```{r}
-plotBCV(d,col.tagwise = "black",col.common = "red",)
+Graphing the dispersion-squared BCV.
 
-```
+We can see that genes with low counts have a higher variation, whereas genes with higher counts have a lower variation towards the expected trend. For our dataset, the trend of the count data falls around the common dispersion line in a BCV plot, indicating that the variance of the data is relatively consistent with the expected trend. 
 
-Create a visual representation of the mean-variance relationship
-```{r}
-edgeR::plotMeanVar(d, show.raw.vars = TRUE, show.tagwise.vars=TRUE, 
-            show.ave.raw.vars = TRUE,  
-            NBline=TRUE,
-            show.binned.common.disp.vars = TRUE)
+```{r BCV plot}
+plotBCV(d,col.tagwise = "black",col.common = "red", main = "Dispersion-squared BCV Plot")
 ```
 
 
 
 # Identifier mapping
 Get all availale marts
-```{r}
+```{r List all marts}
 listMarts()
 #If different version is needed
 listEnsemblArchives()[1:10,]
 ```
 
 Connect to the desired mart
-```{r}
+```{r Connect to mart}
 ensembl <- useMart("ensembl")
 ```
 
 Get the set of datasets available
-```{r}
+```{r Datasets available}
 datasets <- listDatasets(ensembl)
 knitr::kable(head(datasets),format = "html")
 ```
 
 Limit to the human datasets available
-```{r}
+```{r Limit to human}
 knitr::kable(head(datasets[grep(datasets$dataset,
                   pattern = "sapiens"),]),format = "html")
 ensembl <- useDataset("hsapiens_gene_ensembl",mart=ensembl)
@@ -434,12 +455,12 @@ ensembl <- useDataset("hsapiens_gene_ensembl",mart=ensembl)
 ## Building a Biomart Query
 
 How many filters are there?
-```{r}
+```{r Number of filters}
 dim(listFilters(ensembl))
 ```
 
 What do those filters look like?
-```{r}
+```{r Filters}
 knitr::kable(listFilters(ensembl)[1:10,1:2], type="html")
 biomart_human_filters <- listFilters(ensembl)
 ```
@@ -452,20 +473,20 @@ This dataset stores the genes in various ways, including HGNC symbols, GenBank I
 
 
 Use the function __**searchAttributes**__ to find the attributes I am looking for
-```{r}
+```{r Search attribute}
 kable(searchAttributes(mart = ensembl, 'hgnc') , format="html") %>%
   row_spec(2, background = "yellow")
 ```
 
 Use the homo sapiens database from Ensembl:
-```{r}
+```{r Obtain Homo sapiens database}
 httr::set_config(httr::config(ssl_verifypeer = FALSE))
 ensembl <- biomaRt::useMart("ensembl", dataset="hsapiens_gene_ensembl")
 ```
 
 
 Obtain the genes that are already mapped to HGNC symbols in the original dataset:
-```{r}
+```{r Genes mapped to HGNC}
 conversion_stash <- "gene_conversion.rds"
 if (file.exists(conversion_stash)) {
   gene_conversion <- readRDS(conversion_stash)
@@ -482,14 +503,14 @@ if (file.exists(conversion_stash)) {
 
 
 Obtain the dataset with genes that are not represented by HGNC symbols
-```{r}
+```{r Genes not HGNC}
 not_hgnc <- ntm_exp_filtered[-(which(rownames(normalized_counts) %in% gene_conversion$hgnc_symbol)), ]
 ```
 <br>
 
 ## 1. Convert Entrez accessions to HGNC symbols
 
-```{r}
+```{r Convert Entrez}
 kable(searchAttributes(mart = ensembl, 'entrez') , format="html")
 
 entrez_conversion <- getBM(attributes = c("entrezgene_accession","hgnc_symbol"),
@@ -506,7 +527,7 @@ rownames(normalized_counts)[which(rownames(normalized_counts) %in% entrez_conver
 
 According to [HGNC website of BioMart](https://www.genenames.org/help/biomart/) help page, the attribute used to map GenBank IDs to HGNC symbols is named as **INSDC**. 
 
-```{r}
+```{r Convert Genbank}
 genbank <- not_hgnc[-(which(not_hgnc$Gene %in% entrez_conversion$entrezgene_accession)), ]
 knitr::kable(biomart_human_filters[
   grep(biomart_human_filters$description,pattern="INSDC"),],
@@ -516,7 +537,7 @@ knitr::kable(biomart_human_filters[
 ** Can some of our GenBank accession numbers map to it**?
 
 By limiting the filter to homo sapiens, I obtained no results. Since these GenBank accession numbers are not able to map to any alternative names, I have to ignore them from our dataset.
-```{r}
+```{r List genbank conversion result}
 dim(getBM(attributes = c("protein_id","hgnc_symbol"),
                     filters = "protein_id",
                     values = genbank$Gene,
@@ -527,7 +548,7 @@ dim(getBM(attributes = c("protein_id","hgnc_symbol"),
 ## 3. Get rid of the genes (if any) that are mapped to none of the conversion datasets above.
 
 
-```{r}
+```{r Remove unmapped genes}
 mapped_index <- which((rownames(normalized_counts) %in% entrez_conversion$hgnc_symbol) |
                     (rownames(normalized_counts) %in% gene_conversion$hgnc_symbol))
 
@@ -536,40 +557,42 @@ normalized_counts_annot <- normalized_counts[mapped_index, ]
 ```
 
 How many genes left?
-```{r}
+```{r Rest genes}
 dim(normalized_counts_annot)
 ```
 
 **Are there any duplicates?**
 
 Yes, there are 23 duplicated identifiers.
-```{r}
+```{r Number of duplicates}
 dup_id <- which(duplicated(rownames(normalized_counts_annot)) == TRUE)
 length(dup_id)
 ```
 
 These are the duplicated identifiers.
-```{r}
+```{r List duplicates}
 rownames(normalized_counts_annot[dup_id, ])
 ```
 
 **What are they?**
-```{r}
+
+Most of them are non-coding RNAs and pseudogenes, so we can just remove them.
+```{r Description}
 gene_description <- getBM(attributes = c("description","hgnc_symbol"),
                     filters = "hgnc_symbol",
                     values = rownames(normalized_counts_annot[dup_id, ]),
                     mart = ensembl)
 
-
+gene_description
 ```
 
 Get rid of the duplicated rows
-```{r}
+```{r Remove duplicates}
 normalized_counts_final <- normalized_counts_annot[-dup_id,]
 ```
 
 The final dataset:
-```{r}
+```{r Final dataset}
 kable(head(normalized_counts_final), format = "html")
 ```
 
