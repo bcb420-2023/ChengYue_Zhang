@@ -10,14 +10,17 @@ output:
     toc: yes
     toc_depth: 2
 bibliography: A1.bib
-csl: "apa-annotated-bibliography.csl"
 ---
 
 # Download Packages
-
+* R (@r)
 * [BiocManager](https://CRAN.R-project.org/package=BiocManager) (@morgan2021a)
 * [GEOmetadb](https://bioconductor.org/packages/release/bioc/html/GEOmetadb.html) (@mccarthy2012a)
 * [edgeR](https://bioconductor.org/packages/release/bioc/html/edgeR.html) (@robinson2010a, @mccarthy2012a, @chen2016a)
+* [limma](https://bioconductor.org/packages/release/bioc/html/limma.html) (@ritchie2015a)
+* [biomaRt](https://bioconductor.org/packages/release/bioc/html/biomaRt.html) (@durinck2009a, @durinck2005a)
+* [GEOquery](https://bioconductor.org/packages/release/bioc/html/GEOquery.html) (@davis2007a)
+* [Biobase & BioGenerics](https://bioconductor.org/packages/release/bioc/html/Biobase.html) (@huber2015a)
 ```{r message = FALSE, warning=FALSE}
 if (!requireNamespace("BiocManager", quietly = TRUE)){
   install.packages("BiocManager")}
@@ -117,7 +120,7 @@ sfiles <- getGEOSuppFiles('GSE162515')
 There are four supplement files. Here, I will choose [4] which is the RNAseq raw counts file.
 ```{r echo = TRUE, message = TRUE}
 fnames <- rownames(sfiles)
-myexp <- read.delim(fnames[4],header=TRUE,
+ntm_exp <- read.delim(fnames[4],header=TRUE,
                 check.names = FALSE)
 fnames
 ```
@@ -125,14 +128,14 @@ fnames
 
 Information about expression data (i.e. gene names, chromosome, start/end position, sequence length) are from column 88 to 92 in the table. Move these to the first column for better visualization and processing.
 ```{r}
-expInfos <- myexp[, seq(88, 92)]
+expInfos <- ntm_exp[, seq(88, 92)]
 
-myexp <- cbind(expInfos, myexp[, seq(-88, -92)])
+ntm_exp <- cbind(expInfos, ntm_exp[, seq(-88, -92)])
 ```
 <br>
 Check the table
 ```{r}
-kable(myexp[1:15,1:15], format = "html")
+kable(ntm_exp[1:15,1:15], format = "html")
 ```
 
 
@@ -141,13 +144,13 @@ kable(myexp[1:15,1:15], format = "html")
 
 How many genes do I have measurements for?
 ```{r dimension of loaded data}
-dim(myexp)
+dim(ntm_exp)
 ```
 <br>
 Are any of genes duplicated? and Why?
 
 ```{r}
-summarized_gene_counts <- sort(table(myexp$Gene),
+summarized_gene_counts <- sort(table(ntm_exp$Gene),
                                decreasing = TRUE)
 ```
 <br>
@@ -161,7 +164,7 @@ So yes, there are duplicated genes, but not very significant. The highest freque
 
 Right now, the column names for the count data are very informative, as shown below:
 ```{r}
-colnames(myexp)[1:15]
+colnames(ntm_exp)[1:15]
 ```
 ### Use the GSE series matrix to make the column names informative
 
@@ -185,8 +188,8 @@ Process sample names
 samples <- lapply(rnaSeq$title, FUN=function(x){unlist(strsplit(x,
                         split = " "))[2]})
 sample_types <- substr(samples,1,nchar(samples)-1)
-newColNames <- c(colnames(myexp)[1:5], sample_types)
-colnames(myexp) <- newColNames
+newColNames <- c(colnames(ntm_exp)[1:5], sample_types)
+colnames(ntm_exp) <- newColNames
 ```
 <br>
 **Group the data**
@@ -194,9 +197,9 @@ colnames(myexp) <- newColNames
 There are three groups of samples, where "T" indicates "Thyroid tumor", "N" indicates "Normal thyroid, and "M" indicates "Cervical LymphNode Metastases". 
 ```{r}
 #get the 2 and third token from the column names
-samples <- data.frame(lapply(colnames(myexp)[6:92], FUN=function(x){unlist(strsplit(x,
+samples <- data.frame(lapply(colnames(ntm_exp)[6:92], FUN=function(x){unlist(strsplit(x,
                         split = "\\-"))[c(2,3)]}))
-colnames(samples) <- colnames(myexp)[6:92]
+colnames(samples) <- colnames(ntm_exp)[6:92]
 rownames(samples) <- c("individual","tissue_type")
 samples <- data.frame(t(samples))
 ```
@@ -217,11 +220,11 @@ sum(grepl("M", samples$tissue_type))
 ```{r}
 #translate out counts into counts per million using 
 #the edgeR package function cpm
-cpms <- edgeR::cpm(myexp[,6:92])
-rownames(cpms) <- myexp$Gene
+cpms <- edgeR::cpm(ntm_exp[,6:92])
+rownames(cpms) <- ntm_exp$Gene
 # get rid of low counts
 keep <- rowSums(cpms >1) >=3
-myexp_filtered <- myexp[keep,]
+ntm_exp_filtered <- ntm_exp[keep,]
 ```
 
 
@@ -230,15 +233,15 @@ myexp_filtered <- myexp[keep,]
 
 The size of our dataset gets smaller.
 ```{r difference before and after filtering on the expression data}
-dim(myexp)
-dim(myexp_filtered)
+dim(ntm_exp)
+dim(ntm_exp_filtered)
 ```
 <br>
 **What does that do to the duplicates?**
 
 The duplicates do not change. The highest frequency of duplicate is still 2.
 ```{r}
-summarized_gene_counts_filtered <- sort(table(myexp$Gene),
+summarized_gene_counts_filtered <- sort(table(ntm_exp$Gene),
                                decreasing = TRUE)
 
 kable(summarized_gene_counts_filtered[
@@ -252,7 +255,7 @@ kable(summarized_gene_counts_filtered[
 ## Distribution of our data
 ### Boxplot
 ```{r warning=FALSE,message=FALSE}
-data2plot <- log2(cpm(myexp_filtered[,6:92]))
+data2plot <- log2(cpm(ntm_exp_filtered[,6:92]))
 boxplot(data2plot, xlab = "Samples", ylab = "log2 CPM",
         las = 2, cex = 0.5, cex.lab = 0.5,
         cex.axis = 0.5, main = "RNASeq Samples")
@@ -265,7 +268,7 @@ abline(h = median(apply(data2plot, 2, median)),
 
 Density plot of the filtered expression dataset before normalization.The plot is showing a normal distribution, so we will use TMM for normalization.
 ```{r}
-counts_density <- apply(log2(edgeR::cpm(myexp_filtered[,6:92])), 
+counts_density <- apply(log2(edgeR::cpm(ntm_exp_filtered[,6:92])), 
                         2, density)
   #calculate the limits across all the samples
     xlim <- 0; ylim <- 0
@@ -292,16 +295,16 @@ counts_density <- apply(log2(edgeR::cpm(myexp_filtered[,6:92])),
 
 ## MA plot comparing the C1-T1 and C1-N1 sample in data set
 ```{r}
-limma::plotMA(log2(myexp[,c(6,7)]), ylab="M - ratio log expression", 
+limma::plotMA(log2(ntm_exp[,c(6,7)]), ylab="M - ratio log expression", 
        main="C1-T1 vs N1 example")
 ```
 
 ## Applying TMM
 Create an edgeR container for RNASeq count data
 ```{r results='hide'}
-celltypes <-colnames(myexp)[6:92]
-filtered_data_matrix <- as.matrix(myexp_filtered[, 6:92])
-rownames(filtered_data_matrix) <- myexp_filtered$Gene
+celltypes <-colnames(ntm_exp)[6:92]
+filtered_data_matrix <- as.matrix(ntm_exp_filtered[, 6:92])
+rownames(filtered_data_matrix) <- ntm_exp_filtered$Gene
 d <- edgeR::DGEList(counts = filtered_data_matrix, group = samples$tissue_type)
 ```
 
@@ -318,7 +321,23 @@ normalized_counts <- cpm(d)
 
 
 
-Density plot of the expression dataset after normalization.
+### Boxplot after normalization
+
+The difference of the boxplot before and after normalization is too minimal to be visualized.
+```{r warning=FALSE,message=FALSE}
+data2plot <- log2(cpm(normalized_counts[,1:87]))
+boxplot(data2plot, xlab = "Samples", ylab = "log2 CPM",
+        las = 2, cex = 0.5, cex.lab = 0.5,
+        cex.axis = 0.5, main = "RNASeq Samples")
+#draw the median on each box plot
+abline(h = median(apply(data2plot, 2, median)),
+       col = "green", lwd = 0.6, lty = "dashed")
+```
+
+
+
+
+### Density plot after normalization.
 
 There is no difference in the density plot before and after normalization, or the difference is too minimal to be visualized.
 ```{r}
@@ -453,7 +472,7 @@ if (file.exists(conversion_stash)) {
 } else {
   gene_conversion <- biomaRt::getBM(attributes = "hgnc_symbol",
                                   filters = "hgnc_symbol",
-                                  values = myexp_filtered$Gene,
+                                  values = ntm_exp_filtered$Gene,
                                   mart = ensembl)
   saveRDS(gene_conversion, conversion_stash)
 }
@@ -464,7 +483,7 @@ if (file.exists(conversion_stash)) {
 
 Obtain the dataset with genes that are not represented by HGNC symbols
 ```{r}
-not_hgnc <- myexp_filtered[-(which(rownames(normalized_counts) %in% gene_conversion$hgnc_symbol)), ]
+not_hgnc <- ntm_exp_filtered[-(which(rownames(normalized_counts) %in% gene_conversion$hgnc_symbol)), ]
 ```
 <br>
 
@@ -576,10 +595,10 @@ Yes. The dataset includes genes that are represented as GenBank accession number
 I removed a total of 11538 outliers with low counts.
 
 ### How did you handle replicates?
-There are 23 duplicated genes. By checking their descriptions using the __**description*__ attribute, many of these are non-protein coding RNAs and pseudogenes, so I have sufficient confidence to remove them.
+There are 23 duplicated genes. By checking their descriptions using the __**description**__ attribute, many of these are non-protein coding RNAs and pseudogenes, so I have sufficient confidence to remove them.
 
 ### What is the final coverage of your dataset?
-The final dataset included 17345 genes with unique identifiers.
+The final dataset included 17368 genes with unique identifiers.
 
 
 # References
