@@ -262,6 +262,8 @@ abline(h = median(apply(data2plot, 2, median)),
 ```
 
 ### Density plot
+
+Density plot of the filtered expression dataset before normalization.The plot is showing a normal distribution, so we will use TMM for normalization.
 ```{r}
 counts_density <- apply(log2(edgeR::cpm(myexp_filtered[,6:92])), 
                         2, density)
@@ -276,15 +278,15 @@ counts_density <- apply(log2(edgeR::cpm(myexp_filtered[,6:92])),
     #plot the first density plot to initialize the plot
     plot(counts_density[[1]], xlim=xlim, ylim=ylim, type="n", 
          ylab="Smoothing density of log2-CPM", 
-         main="", cex.lab = 0.85)
+         main="", cex.lab = 0.7)
     #plot each line
     for (i in 1:length(counts_density)) 
       lines(counts_density[[i]], col=cols[i], lty=ltys[i])
     #create legend
     legend("topright", colnames(data2plot),  
-           col=cols, lty=ltys, cex=0.75, 
+           col=cols, lty=ltys, cex=0.45, 
            border ="blue",  text.col = "green4", 
-           merge = TRUE, bg = "gray90")
+           merge = TRUE, bg = "gray90", ncol = 3)
 
 ```
 
@@ -313,6 +315,41 @@ Get the normalized data
 #get the normalized data
 normalized_counts <- cpm(d)
 ```
+
+
+
+Density plot of the expression dataset after normalization.
+
+There is no difference in the density plot before and after normalization, or the difference is too minimal to be visualized.
+```{r}
+normalized_counts_density <- apply(log2(edgeR::cpm(normalized_counts[,1:87])), 
+                        2, density)
+  #calculate the limits across all the samples
+    xlim <- 0; ylim <- 0
+    for (i in 1:length(normalized_counts_density)) {
+      xlim <- range(c(xlim, normalized_counts_density[[i]]$x)); 
+      ylim <- range(c(ylim, normalized_counts_density[[i]]$y))
+    }
+    cols <- rainbow(length(normalized_counts_density))
+    ltys <- rep(1, length(normalized_counts_density))
+    #plot the density plot
+    plot(normalized_counts_density[[1]], xlim=xlim, ylim=ylim, type="n", 
+         ylab="Smoothing density of log2-CPM", 
+         main="", cex.lab = 0.7)
+    #plot each line
+    for (i in 1:length(normalized_counts_density)) 
+      lines(normalized_counts_density[[i]], col=cols[i], lty=ltys[i])
+    
+    #create legend
+    legend("topright", colnames(data2plot),  
+           col=cols, lty=ltys, cex=0.45, 
+           border ="blue",  text.col = "green4", 
+           merge = TRUE, bg = "gray90", ncol = 3)
+
+```
+
+
+
 
 Inspect the sample separation using a multidimensional scaling plot or MDS plot post normalization.
 
@@ -440,7 +477,7 @@ entrez_conversion <- getBM(attributes = c("entrezgene_accession","hgnc_symbol"),
                     filters = "entrezgene_accession",
                     values = not_hgnc$Gene,
                     mart = ensembl)
-
+# Change the row names of the genes matched to HUGO symbols
 rownames(normalized_counts)[which(rownames(normalized_counts) %in% entrez_conversion$entrezgene_accession)] <- entrez_conversion$hgnc_symbol
 ```
 
