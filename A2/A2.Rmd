@@ -17,24 +17,24 @@ always_allow_html: yes
 
 # Introduction
 
-In the first assignment, we utilized the RNASeq data from Sanghi et al.'s publication "Chromatin Accessibility Associates with Protein-RNA Correlation in Human Cancer" to perform data cleaning, normalization, gene mapping to HUGO symbols, and preliminary analysis. The goal of the original study was to explore the relationship between chromatin structure alterations and molecular phenotypes in cancer by utilizing multi-omics profiling of human tumors. They applied this approach to a total of 36 individuals to obtain thyroid cancer primary tumors, metastases, and patient-matched normal tissue, with a total of 87 samples. The study identified a local chromatin structure that is highly correlated with coordinated RNA and protein expression, particularly within gene-body enhancers, and claimed that local enhancers may be more important for regulating cancer gene expression than distal enhancers. Moreover, the authors found that TFs in the MAPK pathway are actively bound significantly more in tumor and metastases than in normal tissue.
+In the first assignment, we utilized the RNASeq data from Sanghi et al.'s publication "Chromatin Accessibility Associates with Protein-RNA Correlation in Human Cancer"(@sanghi2021a) to perform data cleaning, normalization, gene mapping to HUGO symbols, and preliminary analysis. The goal of the original study was to explore the relationship between chromatin structure alterations and molecular phenotypes in cancer by utilizing multi-omics profiling of human tumors. They applied this approach to a total of 36 individuals to obtain thyroid cancer primary tumors, metastases, and patient-matched normal tissue, with a total of 87 samples. The study identified a local chromatin structure that is highly correlated with coordinated RNA and protein expression, particularly within gene-body enhancers, and claimed that local enhancers may be more important for regulating cancer gene expression than distal enhancers. Moreover, the authors found that TFs in the MAPK pathway are actively bound significantly more in tumor and metastases than in normal tissue.
 
 We obtained the dataset with the ID [GSE162515](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE162515) from GEO, which is linked to the study "Chromatin Accessibility Associates with Protein-RNA Correlation in Human Cancer". The dataset contains a total of 28,883 genes, and the experiment conditions are categorized into 27 normal tissue samples, 30 tumor tissue samples, and 30 metastases tissue samples.
 
-To improve the data quality, we removed genes with less than 1 count per million (cpm) in less than three samples, resulting in the removal of 11,538 genes. We then performed normalization using TMM with the edgeR package to correct the large deviation of means between the untreated and treated groups while still preserving some of the original sample distribution. Interestingly, the data was already well-aligned after removing low counts, so the normalization step only slightly improved the dataset's quality.
+To improve the data quality, we removed genes with less than 1 count per million (cpm) in less than three samples, resulting in the removal of 11,538 genes. We then performed normalization using TMM with the edgeR package to correct the large deviation of means between the tumor, metastases and normal tissue groups while still preserving some of the original sample distribution. Interestingly, the data was already well-aligned after removing low counts, so the normalization step barely improved the quality of the dataset. Figures such as MDS plot and BCV plot are generated to visualize the quality, as shown below.
 
-From the post-normalization MDS plot, we observed that the overall separation between each test condition group (T and M) and the normal group is clear. 
-```{r mds, out.width = "90%", echo = FALSE, fig.cap="Figure 1. MDS plot to inspect the sample separation. From the plot, we can see that the overall separation between each test condition group (T and M) to normal group is good, indicating a good dataset quality."}
+From the post-normalization MDS plot, we observed that the overall separation between each test condition group (T and M) and the normal group is clear, indicating a good dataset quality. 
+```{r mds, out.width = "90%", echo = FALSE, fig.cap="Figure 1. MDS plot to inspect the sample separation. Green: metastases; Black: Tumor; Blue: Normal. The overall separation between each test condition group (T and M) to normal group is clear, indicating a good dataset quality."}
 knitr::include_graphics("figures/MDS.jpeg")
 ```
 
 Additionally, the variance of the data was relatively consistent with the expected trend, as indicated by the dispersion-squared BCV plot.
 
-```{r bcv, out.width = "90%", echo = FALSE, fig.cap="Figure 2. Dispersion-squared BCV plot. Genes with low counts have a higher variation, whereas genes with higher counts have a lower variation towards the expected trend. For our dataset, the trend of the count data falls around the common dispersion line in a BCV plot, indicating that the variance of the data is relatively consistent with the expected trend."}
+```{r bcv, out.width = "90%", echo = FALSE, fig.cap="Figure 2. Dispersion-squared BCV plot. Genes with low counts have a higher variation, whereas genes with higher counts have a lower variation towards the expected trend. The trend of the count data falls around the common dispersion line in a BCV plot, indicating that the variance of the data is relatively consistent with the expected trend."}
 knitr::include_graphics("figures/BCV.jpeg")
 ```
 
-To map identifiers, we utilized the package biomaRt with Ensembl data. Ensembl gene IDs in the original dataset were mapped to the corresponding HUGO gene symbols. After removing low counts, genes with duplicate identifiers, and genes that cannot be mapped to HUGO symbols, the final dataset contained 17,368 unique genes.
+To map identifiers, we utilized the package biomaRt. Fortunately, gene IDs in the original dataset were mostly already mapped to the corresponding HUGO gene symbols. After removing low counts, genes with duplicate identifiers, and genes that cannot be mapped to HUGO symbols, the final dataset contained 17,368 unique genes.
 
 
 # Download Packages
@@ -112,9 +112,9 @@ library("kableExtra")
 
 In this section, we will use edgeR package to perform differential expression analysis.
 
-## Retrieve information from Assignment 1.
+## Retrieve information from Assignment 1
 The normalized data processed from Assignment 1 has been stored in the file named as "normalized_counts_final.txt". We now load this data into R.
-The categories for the samples were previously saved in "samples.txt" file. We can also load it into R.
+The categories for the samples were saved in "samples.txt" file. We can also load it into R.
 ```{r retrieve_data, message=FALSE}
 normalized_counts <- read.table("normalized_counts_final.txt")
 samples <- read.table("samples.txt")
@@ -128,6 +128,7 @@ kable(normalized_counts[1:5,1:5], format = "html")
 
 ## Examine the samples information
 
+There are two columns, "individuals" and "tissue type". The "individual" column stores data of the patients who the authors took the samples from, and the "tissue type" indicates the type of the tissue, including tumors, metastases, and normal tissue.
 ```{r samples}
 knitr::kable(head(samples, 10),  format = "html")
 ```
@@ -136,26 +137,27 @@ knitr::kable(head(samples, 10),  format = "html")
 In this section, we will create a data matrix from our dataset.
 
 
-In order to perform statistical testing, we need a design matrix the defines our model. Notice that in our dataset, there are two factors: 
+In order to perform statistical testing, we need a design matrix that defines our model. Notice that in our dataset, there are two factors: 
 
 1. Tissue types (Normal, tumor, metastases)
 2. Patient (individual)
 
 Hence, ideally, we would like to account for both factors in our design matrix.
 
-Recall that we want to find the genes that are differentially expressed in the tumor and metastases samples contrast to normal tissues, so we first factor the tissue types such that "N" type comes first. This would affect on which tissue type would be chosen as the control value (i.e. intercept) when performing __**model.matrix**__ function to generate the design matrix.
+Recall that we want to find the genes that are differentially expressed in the tumor and metastases samples in contrast to normal tissues, so we first factor the tissue types such that "N" type becomes the baseline/reference level. This would affect on which tissue type would be chosen as the control value (i.e. intercept) when performing __**model.matrix**__ function to generate the design matrix.
 ```{r design_matrix, message=FALSE}
 # Set normal tissue type as the intercept
 samples$tissue_type <- factor(samples$tissue_type)
 samples$tissue_type <- relevel(samples$tissue_type, ref="N")
 
-# Doesn't really matter for individual people, but we can set C1 as the intercept for the sake of tidiness.
+# Doesn't really matter for individual people, but we can set C1 as the intercept for the sake of habit.
 samples$individual <- factor(samples$individual)
 samples$individual <- relevel(samples$individual, ref="C1")
 
-# Generate design matrix
+# Generate design matrix with both factors: individual and tissue type
 model_design <- model.matrix(~ samples$individual + samples$tissue_type)
 
+# Check the matrix
 model_design[1:5,1:5]
 ```
 
@@ -166,18 +168,21 @@ For our downstream analysis, we are going to use edgeR, which is specifically de
 ```{r dispersion_calc, message=FALSE}
 d <- edgeR::DGEList(counts = normalized_counts, group = samples$tissue_type)
 ```
+For further processing, we choose to use the quasi-likelihood models since our dataset is from an RNASeq experiment and quasi-likelihood models are best suited to handle RNASeq data.
 
 ### Check Eligibility
 
 One important underlying assumption for using the Quasi-likelihood model is that the data follows a negative binomial distribution. We need to verify that our dataset indeed meets that assumption.
 
-To do this, we calculate the dispersion and plot to visualize the mean-variance relationship. 
+To do this, we calculate the dispersion and generate the plot to visualize the mean-variance relationship. 
 
 ```{r estimate_disp, message = FALSE}
+# Calculate dispersion
 d <- edgeR::estimateDisp(d, model_design)
 ```
 
 ```{r mean_var_plot, eval = FALSE}
+# Generate MV plot
 edgeR::plotMeanVar(d,
                    show.raw.vars = TRUE,
                    show.tagwise.vars = TRUE,
@@ -185,12 +190,14 @@ edgeR::plotMeanVar(d,
                    show.ave.raw.vars = TRUE,
                    show.binned.common.disp.vars = TRUE,
                    main = "Mean-Variance Plot for Normalized Data")
-# display legend
+# Display legend
 legend("topleft", 
        legend=c("Raw Data", "Tagwise Dispersion", "Average Raw Variances", 
                 "Binned Common Dispersion", "Negative Binomial Line"), 
        col = c("grey", "lightblue", "maroon", "red", "dodgerblue2"), pch=c(1,1,4,4,NA), lty=c(0,0,0,0,1), lwd=c(1,1,1,1,2), cex=0.6)
 ```
+
+From the MV plot, we can see that our normalized count data follows the negative binomial distribution, where it clearly aligns with the blue line indicating the negative binomial trend.
 
 ```{r mean_var_display, out.width = "90%", echo = FALSE, fig.cap="Figure 3. Mean-variance plot showing the distribution of data. The dispersion and variance of the data perfectly follows the negative binomial distribution, in which the raw data and the blue negative binomial line alligns."}
 knitr::include_graphics("figures/mean_var.jpg")
@@ -199,90 +206,108 @@ knitr::include_graphics("figures/mean_var.jpg")
 
 <br>
 
-Now, we have created the design matrix and verified the assumption for the data to be negative-binomially distributed, we can proceed to the next stage of our analysis. We used the quasi-likelihood models since our dataset is from an RNASeq experiment and quasi-likelihood models are best suited to handle RNASeq data.
+Now, we have created the design matrix and verified the assumption for the data to be negative-binomially distributed, we can proceed to the next stage of our analysis. We fit the model using our design matrix: 
 
 ```{r fit_ql, message=FALSE}
 fit <- edgeR::glmQLFit(d, model_design)
 ```
 <br>
 
-Once we have fit the model, we can proceed to calculate differential expression. We will perform the calculation separately for Tumor vs. Normal, and Metastases vs. Normal. To ensure that the significantly differentially expressed genes are not obtained by random, we will perform  correction for multiple hypothesis testing using Benjamini-Hochberg approach.
+Once we have fit the model, we can proceed to calculate differential expression. We will perform the calculation separately for __**Tumor vs. Normal**__, and __**Metastases vs. Normal**__. To ensure that the significantly differentially expressed genes are not obtained by random, we will perform  correction for multiple hypothesis testing using Benjamini-Hochberg approach.
 
 ## Tumor vs. Normal
 
-In this section, we want to test for differential expression between the treatment group (tissue type T) and the reference group (tissue type N).
+In this section, we want to test for differential expression between the tumor samples and normal samples.
 ```{r test_tn, message=FALSE}
+# Conduct genewise statistical tests for tumor tissue as coefficient
 qlf_tn <- edgeR::glmQLFTest(fit, coef='samples$tissue_typeT')
 
+# Extract the top DE hits ranked by PValue
 qlf_tn_hits <- edgeR::topTags(qlf_tn,sort.by = "PValue", adjust.method = "BH",
                            n = nrow(normalized_counts))
-knitr::kable(head(qlf_tn_hits$table), format = "html")
 
+# Display table of top hits
+knitr::kable(head(qlf_tn_hits$table), format = "html")
 ```
+<br>
 
 We can examine the number of genes pass the threshold and correction. We are using 0.05 as the threshold for p-value as it is commonly used in practice.
 <br>
-Number of genes that passed the threshold.
+
+Number of genes that passed the threshold:
 ```{r pval_thresh, message=FALSE}
 length(which(qlf_tn_hits$table$PValue < 0.05))
 ```
 <br>
-Number of genes that passed correction.
+Number of genes that passed correction:
 ```{r fdr_thresh, message=FALSE}
 length(which(qlf_tn_hits$table$FDR < 0.05))
 ```
 <br>
+
 The threshold of 0.05 gives us quite a lot of genes. However, since we are dealing with human disease, which should be more strict to obtain more meaningful hits for further analysis, we choose to use a more stringent threshold of 0.01.
 <br>
-Number of genes that passed the threshold
+
+Number of genes that passed the 0.01 p value threshold:
 ```{r tn_pval_stringent, message=FALSE}
 length(which(qlf_tn_hits$table$PValue < 0.01))
 ```
 <br>
-Number of genes that passed correction
+Number of genes that passed correction of 0.01 threshold:
 ```{r tn_fdr_stringent, message=FALSE}
 length(which(qlf_tn_hits$table$FDR < 0.01))
 ```
 <br>
-The number of genes returned are still sufficient for further analysis.
+There are still a lot of genes left for further analysis. In later sections, genes that have differentially expressed for less than 2 log fold change (LFC) would also be filtered out to obtain a set of more meaningful data.
 
 
 ## Metastases vs. Normal
 
-In this section, we test for differential expression between the treatment group (tissue type M) and the reference group (tissue type N).
+In this section, we test for differential expression between the metastasis tissues and the normal tissues.
 ```{r test_mn, message=FALSE}
+# Conduct genewise statistical tests for metastases tissue as coefficient
 qlf_mn <- edgeR::glmQLFTest(fit, coef='samples$tissue_typeM')
+
+# Extract the top DE hits ranked by PValue
 qlf_mn_hits <- edgeR::topTags(qlf_mn,sort.by = "PValue", adjust.method = "BH",
                            n = nrow(normalized_counts))
+
+# Display table of top hits
 knitr::kable(head(qlf_mn_hits$table), format = "html")
 
 ```
 
+<br>
+We apply the 0.01 threshold for the same reason as indicated previously.
 
-Number of genes that passed the 0.01 threshold
+Number of genes that passed the 0.01 p value threshold:
 ```{r mn_pval_stringent, message=FALSE}
 length(which(qlf_mn_hits$table$PValue < 0.01))
 ```
 <br>
-Number of genes that passed correction with 0.01 threshold
+
+Number of genes that passed correction with 0.01 threshold:
 ```{r mn_fdr_stringent, message=FALSE}
 length(which(qlf_mn_hits$table$FDR < 0.01))
 ```
 <br>
 
-
-
-Each gene is represented by a point in the plot. The horizontal axis of the plot is the log2 fold change and the vertical axis is the -log10p which indicates how likely the differential of a gene is due to actual biological variation.
+Again, we would also filter out the genes that have differentially expressed less than 2 LFC in later sections.
 
 ### Volcano Plot (Tumor vs. Normal)
-We plot the volcano plot to visualize differential expression of genes for tumor vs. normal tissue samples.
+We plot the volcano plot to visualize differential expression of genes for tumor vs. normal tissue samples. Each gene is represented by a point in the plot. The horizontal axis of the plot is the log2 fold change and the vertical axis is the -log10p which indicates how likely the differential of a gene is due to actual biological variation.
 ```{r volcano_plot_tn, eval = FALSE, message = FALSE}
+# Make all data to grey first
 volcano_color_tn = rep('gray', times = nrow(qlf_tn_hits$table))
 
+# For those down-regulated genes with more than 2 LFC and passes 0.01 FDR 
+# correction threshold, make it blue
 volcano_color_tn[qlf_tn_hits$table$logFC < 0 &
                         qlf_tn_hits$table$FDR < 0.01
                       & abs(qlf_tn_hits$table$logFC) > 2] <- 'blue'
 
+# For up-regulated genes with more than 2LFC and passes 0.01 FDR
+# correction threshold, make it red
 volcano_color_tn[qlf_tn_hits$table$logFC > 0 &
                         qlf_tn_hits$table$FDR < 0.01 &
                         abs(qlf_tn_hits$table$logFC) > 2] <- 'red'
@@ -307,7 +332,9 @@ text(x = qlf_tn_hits$table$logFC[tn_sig] , y = -log10(qlf_tn_hits$table$PValue[t
 
 ```
 
-```{r tn_volcano_display, out.width = "90%", echo = FALSE, fig.cap="\\label{fig:volcano_tn}Figure 4. Volcano plot for the top differentially expressed genes that pass the 0.01 P-value threshold and has absolute LFC of larger than 2. There is extensive number of upregulated genes in tumor tissues compared to normal tissues, with the highest of exceeding 6 LFC (log2 Fold Change). Several genes are significantly downregulated, having more than 4 LFC. Upregulated genes with absolute log fold change over 5 and downregulated genes with absolute LFC over 4 have been labeled out the corresponding HUGO symbols.", message=FALSE}
+<br>
+There is extensive number of upregulated genes in tumor tissues compared to normal tissues, with the highest of exceeding 6 LFC (log2 Fold Change). Several genes are significantly downregulated, having more than 4 LFC.
+```{r tn_volcano_display, out.width = "90%", echo = FALSE, fig.cap="\\label{fig:volcano_tn}Figure 4. Volcano plot for the top differentially expressed genes that pass the 0.01 P-value threshold and has absolute LFC of larger than 2. Upregulated genes with absolute log fold change over 5 and downregulated genes with absolute LFC over 4 have been labeled out the corresponding HUGO symbols.", message=FALSE}
 knitr::include_graphics("figures/tn_volcano.jpg" )
 ```
 <br>
@@ -315,18 +342,24 @@ knitr::include_graphics("figures/tn_volcano.jpg" )
 
 
 ### Volcano Plot (Metastases vs. Normal)
-We plot the volcano plot to visualize differential expression of genes for metastases vs. normal tissue samples.
+We also plot the volcano plot to visualize differential expression of genes for metastases vs. normal tissue samples.
 ```{r volcano_plot_mn, eval = FALSE, message = FALSE}
+# Make all data to grey first
 volcano_color_mn = rep('gray', times = nrow(qlf_mn_hits$table))
 
+# For those down-regulated genes with more than 2 LFC and passes 0.01 FDR 
+# correction threshold, make it blue
 volcano_color_mn[qlf_mn_hits$table$logFC < 0 &
                         qlf_mn_hits$table$FDR < 0.01
                       & abs(qlf_mn_hits$table$logFC) > 2] <- 'blue'
 
+# For up-regulated genes with more than 2LFC and passes 0.01 FDR
+# correction threshold, make it red
 volcano_color_mn[qlf_mn_hits$table$logFC > 0 &
                         qlf_mn_hits$table$FDR < 0.01 &
                         abs(qlf_mn_hits$table$logFC) > 2] <- 'red'
 
+# Plot the volcano plot
 plot(qlf_mn_hits$table$logFC,
      -log(qlf_mn_hits$table$PValue, base=10),
      col = volcano_color_mn,
@@ -335,14 +368,19 @@ plot(qlf_mn_hits$table$logFC,
      main = "Volcano plot for Metastases vs. Normal Tissues"
     )
 
+
+# Add the legend
 legend("topright", legend=c("Downregulated in tumor tissues","Upregulated in tumor tissues", "Not significant"),fill = c("blue", "red", "grey"), cex = 0.5)
 
+# Label genes with over 5 LFC
 mn_sig <- which(qlf_mn_hits$table$logFC > 5 | qlf_mn_hits$table$logFC < -5)
 text(x = qlf_mn_hits$table$logFC[mn_sig] , y = -log10(qlf_mn_hits$table$PValue[mn_sig]), label = rownames(qlf_mn_hits$table)[mn_sig], cex = 0.5, adj = c(1, NA), pos = 3)
 
 ```
 
+<br>
 
+There is extensive number of upregulated and downregulated genes in metastases tissues compared to normal tissues, with the highest of exceeding 5 LFC.
 ```{r mn_volcano_display, out.width = "90%", echo=FALSE, fig.cap="\\label{fig:volcano_mn}Figure 5. Volcano plot for the top differentially expressed genes that pass the 0.01 P-value threshold and has absolute LFC of larger than 2. Genes with absolute log fold change over 5 have been labeled out the corresponding HUGO symbols."}
 knitr::include_graphics("figures/mn_volcano.jpg" )
 ```
@@ -414,22 +452,16 @@ knitr::include_graphics("figures/tn_heatmap.jpg" )
 
 
 ### Heatmap (Metastases vs. Normal)
-In order to find the most significantly differentially expressed, we pick the hits that pass a P-value threshold of 0.01, and has absolute value of LFC larger than 2 as the top hits.
+Now we can also plot heatmap for Metastases vs. Normal comparison, with same steps as above.
 ```{r mn_top_DE, message=FALSE}
 # Get top hit genes for M vs N
 top_hits_mn <- rownames(qlf_mn_hits)[qlf_mn_hits$table$PValue < 0.01 & abs(qlf_mn_hits$table$logFC) > 2]
 ```
 
-
-Scale heat map matrix by rows.
 ```{r mn_scale, message=FALSE}
 # Scale heat map matrix by rows
 hm_matrix_mn <- t(scale(t(hm_matrix[rownames(hm_matrix) %in% top_hits_mn, c(metastases, normal)])))
 ```
-
-Pick the color to be used for the plot. If heatmap only contains non-negative values, we will use only white and red, where white indicates 0, and red indicates positive values.
-
-Otherwise, we will use blue to represent negative values.
 
 ```{r mn_heatmap, eval = FALSE}
 # Choose colors to be used
@@ -471,12 +503,11 @@ The two primary approaches for controlling false discovery rate are Bonferroni a
 
 ### 3. Show the amount of differentially expressed genes using an MA Plot or a Volcano plot. Highlight genes of interest.
 
-Volcano plots and heatmaps for both Tumor vs. Normal and Metastases vs. Normal datasets are shown above. The most significantly differentially expressed genes are labeled out by their HUGO symbols in the figures.
+Volcano plots for both Tumor vs. Normal and Metastases vs. Normal datasets are shown above. The most significantly differentially expressed genes are labeled out by their HUGO symbols in the figures.
 
 ### 4. Visualize your top hits using a heatmap. Do your conditions cluster together? Explain why or why not.
 
-There are significant clusterings within conditions. This suggests that the tumor tissues and metastases tissues do have genes that are highly differentially expressed compared to normal tissues. 
-
+There are clear clusterings within conditions, as shown in the graph represented in red and blue. This suggests that the tumor tissues and metastases tissues do have genes that are highly differentially expressed compared to normal tissues. 
 
 
 # Thresholded Overrepresentation Analysis using g:Profiler
@@ -485,23 +516,26 @@ There are significant clusterings within conditions. This suggests that the tumo
 For the final part of this assignment, we will perform a thresholded overrepresentation analysis using g:Profiler. In the previous section, we have compiled a list of differentially expressed genes. Here, we want to further divide them into upregulated and downregulated genes.
 
 ## Tumor vs. Normal Tissue
-
+First, we obtain the upregulated and downregulated genes from the tumor vs. normal tissue dataset.
 ```{r tn_split_updownregulated}
 upregulated_tn <- qlf_tn_hits[qlf_tn_hits$table$logFC > 0 & qlf_tn_hits$table$PValue < 0.01, ]
 downregulated_tn <- qlf_tn_hits[qlf_tn_hits$table$logFC < 0 & qlf_tn_hits$table$PValue < 0.01, ]
 ```
 
-We use the R package for g:Profiler to perform the gene enrichment analysis. For correction, we used FDR as it is less stringent than Bonferroni and is introduced as the preferred correction method in class. We used GO Biological Process, GO Molecular Function, and WP as those are the ones used by the author of the original publication. For a more detailed overview of the workflow, please refer to the Discussion subsection located at the end of this section.
+We use the R package for g:Profiler to perform the gene enrichment analysis. For correction, we used FDR as it is less stringent than Bonferroni and is introduced to be the preferred correction method in class. We used GO Biological Process, GO Molecular Function, and WP as those are the ones used previously in Journal entry assignments, which we are more familiar with.
+
+Then, we perform analysis separately for up-regulated genes and down-regulated genes.
 
 ### Upregulated Genes
-
+To obtain the terms these genes are involved in, we use the __**gost**__ function from gProfiler2 package.
 ```{r tn_gprofiler_up, message=FALSE}
+# Obtain top terms
 tn_up_top_terms_all <- gprofiler2::gost(query = rownames(upregulated_tn), 
                                   organism = "hsapiens", 
                                   exclude_iea = TRUE,
                                   correction_method = "fdr",
                                   sources = c("GO:BP", "REAC", "WP"))
-
+# Limit term size from 1 to 500
 tn_up_top_terms <- data.frame(
   term_name = tn_up_top_terms_all$result$term_name[tn_up_top_terms_all$result$term_size < 500 &
                                                tn_up_top_terms_all$result$term_size > 1],
@@ -524,7 +558,7 @@ knitr::kable(rbind(tn_up_top_terms[tn_up_top_terms$source == "GO:BP",][1,],
 ```
 Generate a Manhattan plot to visualize the distribution of the top terms from each data source.
 
-```{r tn_up_dist_plot}
+```{r tn_up_dist_plot, fig.cap="Figure 8. Manhattan plot displaying the distribution of the top terms from each data source for upregulated genes in tumor vs. normal comparison. There are extensive numbers of GP:BP terms copared to REAC and WP, and terms such as cell adhesion, anatomical structure morphogenesis and anatomical structure development are exceeding 16 -log10 correction threshold."}
 gprofiler2::gostplot(tn_up_top_terms_all) %>% plotly::layout(title = "Manhattan plot for Upregulated genes (Tumor vs. Normal)", font = list(size = 10))
 ```
 Number of terms:
@@ -554,7 +588,8 @@ tn_down_top_terms <- data.frame(
 
 knitr::kable(head(tn_down_top_terms, 10),format = "html")
 ```
-
+<br>
+Top terms from the data sources:
 ```{r tn_down_top_term_per_category, message=FALSE}
 knitr::kable(rbind(tn_down_top_terms[tn_down_top_terms$source == "GO:BP",][1,],
                    tn_down_top_terms[tn_down_top_terms$source == "REAC",][1,],
@@ -563,7 +598,7 @@ knitr::kable(rbind(tn_down_top_terms[tn_down_top_terms$source == "GO:BP",][1,],
 ```
 Plot the Manhattan plot to visualize distribution of terms from each data source for downregulated genes.
 
-```{r tn_down_dist_plot}
+```{r tn_down_dist_plot, fig.cap="Figure 9. Manhattan plot displaying the distribution of the top terms from each data source for downregulated genes in tumor vs. normal comparison. There are less terms included comparing to the upregulated genes."}
 gprofiler2::gostplot(tn_down_top_terms_all) %>% 
   plotly::layout(title = "Manhattan plot for Downregulated genes (Tumor vs. Normal)", font = list(size = 10))
 ```
@@ -574,7 +609,7 @@ length(tn_down_top_terms$term_name)
 
 ### All Differentially Expressed Genes
 
-Finally, for all differentially expressed genes.
+Finally, we analyze for all differentially expressed genes (i.e. both up-regulated and down-regulated genes as a whole).
 
 ```{r tn_gprofiler_overall, message=FALSE}
 tn_top_terms_all <- gprofiler2::gost(query = rownames(qlf_tn_hits), 
@@ -594,6 +629,8 @@ tn_top_terms <- data.frame(
 
 knitr::kable(head(tn_top_terms, 10), format = "html")
 ```
+<br>
+Top terms from the data sources:
 
 ```{r tn_top_term_per_category, message=FALSE}
 knitr::kable(rbind(tn_top_terms[tn_top_terms$source == "GO:BP",][1,],
@@ -603,30 +640,27 @@ knitr::kable(rbind(tn_top_terms[tn_top_terms$source == "GO:BP",][1,],
 ```
 
 
-```{r tn_all_dist_plot}
+```{r tn_all_dist_plot, fig.cap="Figure 10. Manhattan plot displaying the distribution of the top terms from each data source for all genes in tumor vs. normal comparison. There are many terms exceeding 16 adjusted p vallue, indicating very strong enrichment signal."}
 gprofiler2::gostplot(tn_top_terms_all) %>% plotly::layout(title = "Manhattan plot for All DE genes (Tumor vs. Normal)", font = list(size = 10))
 ```
 
-Number of terms:
+There a total of 1447 terms:
 ```{r tn_count_top_terms, message=FALSE}
 length(tn_top_terms$term_name)
 ```
 
 
 
-
-
 ## Metastases vs. Normal Tissue
 
+Again, we perform the analysis for Metastases vs. Normal tissue comparison. First, we obtain the up-regulated genes and down-regulated genes separately.
 ```{r mn_split_updownregulated}
 upregulated_mn <- qlf_mn_hits[qlf_mn_hits$table$logFC > 0 & qlf_mn_hits$table$PValue < 0.01, ]
 downregulated_mn <- qlf_mn_hits[qlf_mn_hits$table$logFC < 0 & qlf_mn_hits$table$PValue < 0.01, ]
 ```
 
-We use the R package for g:Profiler to perform the gene enrichment analysis. For correction, we used FDR as it is less stringent than Bonferroni and is introduced as the preferred correction method in class. We used GO Biological Process, GO Molecular Function, and WP as those are the ones used by the author of the original publication. For a more detailed overview of the workflow, please refer to the Discussion subsection located at the end of this section.
-
 ### Upregulated Genes
-
+Obtain all terms involved for up-regulated genes using GO:BP, REAC and WP data source.
 ```{r mn_gprofiler_up, message=FALSE}
 mn_up_top_terms_all <- gprofiler2::gost(query = rownames(upregulated_mn), 
                                   organism = "hsapiens", 
@@ -655,7 +689,7 @@ knitr::kable(rbind(mn_up_top_terms[mn_up_top_terms$source == "GO:BP",][1,],
 ```
 We can visualize the distribution of top terms from each data source using an Manhattan plot.
 
-```{r mn_up_dist_plot}
+```{r mn_up_dist_plot, fig.cap="Figure 11. Manhattan plot displaying the distribution of the top terms from each data source for up-regulated genes in metastases vs. normal comparison. There are many terms exceeding 16 adjusted p vallue, indicating very strong enrichment signal."}
 gprofiler2::gostplot(mn_up_top_terms_all) %>% plotly::layout(title = "Manhattan plot for upregulated genes (Metastases vs. Normal)", font = list(size = 10))
 ```
 
@@ -695,11 +729,12 @@ knitr::kable(rbind(mn_down_top_terms[mn_down_top_terms$source == "GO:BP",][1,],
 ```
 Plot the Manhattan plot showing distribution of terms from each data source using list of downregulated genes.
 
-```{r mn_down_dist_plot}
+```{r mn_down_dist_plot, fig.cap="Figure 12. Manhattan plot displaying the distribution of the top terms from each data source for down-regulated genes in metastases vs. normal comparison. There are less terms involved for down-regulated genes compared to the up-regulated genes."}
 gprofiler2::gostplot(mn_down_top_terms_all) %>% 
   plotly::layout(title = "Manhattan plot for downregulated genes (Metastases vs. Normal)", font = list(size = 10))
 ```
 
+Number of terms returned:
 ```{r mn_count_down_top_terms, message=FALSE}
 length(mn_down_top_terms$term_name)
 ```
@@ -735,8 +770,8 @@ knitr::kable(rbind(mn_top_terms[mn_top_terms$source == "GO:BP",][1,],
              format = "html")
 ```
 
-
-```{r mn_all_dist_plot}
+And again, we plot the Manhattan plot to visualize the terms enrichment:
+```{r mn_all_dist_plot, fig.cap="Figure 12. Manhattan plot displaying the distribution of the top terms from each data source for all genes in metastases vs. normal tissue comparison. There are less terms involved for this comparison, comparing to the tumor vs. normal group."}
 gprofiler2::gostplot(mn_top_terms_all) %>% 
   plotly::layout(title = "Manhattan plot for All DE genes 
                  (Metastases vs. Normal)", font = list(size = 10))
@@ -762,7 +797,7 @@ I choose GO:BP, Reactome, and WikiPathways for annotation because they were prev
 
 ### 3. How many genesets were returned with what thresholds?
 
-For all three analysis (using upregulated, downregulated, all differentially expressed) for both tumor vs. normal tissue and metastases vs. normal tissue, we used a threshold between 1 and 500. We set the upper bound to 500 because we do not want to include overly broad and generic terms that will not give us meaningful insights into the roles of the differentially expressed genes. The P value threshold is set to 0.01.
+For all three analysis (using upregulated, downregulated, all differentially expressed) for both tumor vs. normal tissue and metastases vs. normal tissue, we used a threshold of adjusted p value of 0.01, and limit term size between 1 and 500. We set the upper bound to 500 because we do not want to include overly broad and generic terms that will not give us meaningful insights into the roles of the differentially expressed genes. The P value threshold is set to 0.01.
 
 Tumor vs. Normal: <br>
 Upregulated genes returned 490 gene sets; 
@@ -786,11 +821,11 @@ Upregulated genes returned around 10 times more terms than the result for all DE
 # Interpretation
 
 ### 1. Do the over-representation results support conclusions or mechanism discussed in the original paper?
-Yes, the over-representation results support the conclusions and mechanism discussed in the original paper. Terms such as regulation of gene expression showed up within the analysis result for up-regulated gene sets for tumor tissues and metastases tissues. In the original paper, the authors predicted that the tumors would have TFs that interact with the MAPK pathway and regulate gene expression in a way that is relevant to the development and progression of cancer, and indeed they found that TFs in the MAPK pathway are actively bound significantly more in tumor and metastases than in normal tissue. Transcription factors are widely know to play a role in regulating gene expresison, which indicates that our results support the conclusions discussed in the original paper.
+Not too much, the over-representation results doesn't strongly support the conclusions and mechanism discussed in the original paper, probably due to the annotation sources that I choose that yelds different results. However, terms such as regulation of mitotic cell cycle showed up within the analysis result for up-regulated gene sets for tumor tissues and metastases tissues. In the original paper, the authors predicted that the tumors would have TFs that interact with the MAPK pathway and regulate gene expression in a way that is relevant to the development and progression of cancer, and indeed they found that TFs in the MAPK pathway are actively bound significantly more in tumor and metastases than in normal tissue. Transcription factors are widely know to play a role in regulating gene expresison, which would also affect mitotic cell cycle, indicating that our results support the conclusions discussed in the original paper in some way.
 
 ### 2. Can you find evidence, i.e. publications, to support some of the results that you see. How does this evidence support your results. 
 
-There are thousands of publications describing how transcription factors regulate gene expressions. In the review paper "Transcription factors and evolution: An integral part of gene expression (Review)" by Thanasis et. al, they discussed the function of TFs as the primary regulators of gene expression (@mitsis2020a). In [Wikipedia](https://en.wikipedia.org/wiki/Transcription_factor), it is also stated that the function of TFs is to regulate gene expression. Thus, we have sufficient support on our results.
+There are publications describing how transcription factors regulates mitotic cell cycle. In the review paper "Coordinating gene expression during the cell cycle" by Martin.F et. al, they discussed the control mechanisms for mitotic cell cycles in mammals, which include activating genes with peak expression in G1/S by E2F transcription factors (TFs), which is required for DNA synthesis. (@FISCHER20221009). 
 
 
 # References
